@@ -31,9 +31,9 @@ public interface PartTimeEmployeeRepository extends JpaRepository<PartTimeEmploy
 
     @Query("""
             SELECT
-            COUNT(U) FROM PartTimeEmployee PE JOIN PE.workEmail U where U.workEmail like %:fullname%
+            COUNT(PE) FROM PartTimeEmployee PE where lower(PE.firstName) = lower(:firstName) and lower(PE.lastName) = lower(:lastName)
             """)
-    Integer countSameFullName(String fullname);
+    Integer countSameFullName(String firstName,String lastName);
 
     Optional<PartTimeEmployee> findByIdAndResignDateIsNull(Integer id);
     Optional<PartTimeEmployee> findByWorkEmailWorkEmail(String workEmail);

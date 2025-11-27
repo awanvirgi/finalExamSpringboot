@@ -64,7 +64,7 @@ public class PartTimeEmployeeService {
 
         User newUser = new User();
         String fullname = (request.getFirstName() + "." + request.getLastName()).toLowerCase();
-        Integer countSameFullname = partTimeEmployeeRepository.countSameFullName(fullname);
+        Integer countSameFullname = partTimeEmployeeRepository.countSameFullName(request.getFirstName(),request.getLastName());
         if (countSameFullname > 0) {
             fullname = fullname + (countSameFullname + 1);
         }

@@ -19,24 +19,6 @@ public interface WorkScheduleRepository extends JpaRepository<WorkSchedule,Integ
             u.id,
            CONCAT(u.firstName, ' ', u.lastName),
            ws.workDate,
-           new com.finalexam.trabea.workshift.dto.ResponseWorkShift(w.id, w.startTime, w.endTime)
-       )
-       FROM WorkSchedule ws
-       JOIN ws.partTimeEmployeeId u
-       JOIN ws.workShiftId w
-       WHERE
-            ws.isApproved = true
-            AND ws.workDate >= :startWeek
-            AND  ws.workDate <= :endWeek
-       """)
-    List<ResponseSubmision> findAllSubmission(LocalDate startWeek, LocalDate endWeek);
-
-    @Query("""
-       SELECT new com.finalexam.trabea.workschedule.dto.ResponseWorkSchedule(
-            ws.id,
-            u.id,
-           CONCAT(u.firstName, ' ', u.lastName),
-           ws.workDate,
            w.id
        )
        FROM WorkSchedule ws

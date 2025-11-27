@@ -1,6 +1,6 @@
 package com.finalexam.trabea.workschedule.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,6 +15,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class RequestWorkSchedule {
     @NotNull
+    @FutureOrPresent
     private LocalDate workDate;
     @NotNull
     private Integer workShiftId;
