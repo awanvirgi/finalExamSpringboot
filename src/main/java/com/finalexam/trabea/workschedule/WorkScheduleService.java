@@ -35,6 +35,9 @@ public class WorkScheduleService {
     private final PartTimeEmployeeRepository partTimeEmployeeRepository;
     private final EmployeeRepository employeeRepository;
 
+    private static final int MAX_SHIFT_PER_DAY = 2;
+    private static final int MAX_SHIFT_PER_WEEK = 5;
+
     public ResponseListWorkSchedule findAllWorkSchedules(Boolean nextWeek){
         LocalDate nowDay = LocalDate.now();
         int nowDayInNumber = nowDay.getDayOfWeek().getValue();
@@ -69,17 +72,17 @@ public class WorkScheduleService {
         );
 
         List<WorkSchedule> workSchedules = workScheduleRepository.findAllWorkScheduleInParTime(targetPartTime.getId(),request.getWorkDate());
-        if (workSchedules.size() >= 2){
-            throw new ConflictException("You have reached the maximum shift limit for this date.");
+        if (workSchedules.size() >= MAX_SHIFT_PER_DAY){
+            throw new ConflictException("You have reached the maximum shift limit to %s for this date.".formatted(MAX_SHIFT_PER_DAY));
+        }
+        if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startWeek,endWeek,targetPartTime.getId()) >= MAX_SHIFT_PER_WEEK){
+            throw new ConflictException("Weekly quota exceeded. You are limited to %s shifts per week.".formatted(MAX_SHIFT_PER_WEEK));
         }
         if (!workSchedules.isEmpty()){
             if (!workSchedules.getFirst().getWorkShiftId().getEndTime().equals(workShift.getStartTime())){
                 if (!workSchedules.getFirst().getWorkShiftId().getStartTime().equals(workShift.getEndTime())){
                     throw new ConflictException("Shift selection must be sequential. Please select the previous or next shift.");
                 }
-            }
-            if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startWeek,endWeek,targetPartTime.getId()) >= 5){
-                throw new ConflictException("Weekly quota exceeded. You are limited to 5 shifts per week.");
             }
         }
 
@@ -103,22 +106,23 @@ public class WorkScheduleService {
 
         PartTimeEmployee targetPartTime = workSchedule.getPartTimeEmployeeId();
         List<WorkSchedule> workSchedules = workScheduleRepository.findAllWorkScheduleInParTime(targetPartTime.getId(),workSchedule.getWorkDate());
-        if (workSchedules.size() >= 2){
-            throw new ConflictException("PartTime have reached the maximum shift limit for this date.");
+        if (workSchedules.size() >= MAX_SHIFT_PER_DAY){
+            throw new ConflictException("PartTime have reached the maximum shift limit to %s for this date.".formatted(MAX_SHIFT_PER_DAY));
         }
 
         LocalDate targetday = workSchedule.getWorkDate();
         LocalDate startDate = targetday.with(DayOfWeek.MONDAY);
         LocalDate endDate = startDate.plusDays(4);
 
+        if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startDate,endDate,targetPartTime.getId()) >= MAX_SHIFT_PER_WEEK){
+            throw new ConflictException("Weekly quota exceeded. Part-Time Employee are limited to %s shifts per week.".formatted(MAX_SHIFT_PER_WEEK));
+        }
+
         if (!workSchedules.isEmpty()){
             if (!workSchedules.getFirst().getWorkShiftId().getEndTime().equals(workSchedule.getWorkShiftId().getStartTime())){
                 if (!workSchedules.getFirst().getWorkShiftId().getStartTime().equals(workSchedule.getWorkShiftId().getEndTime())){
                     throw new ConflictException("Shift selection must be sequential. Please select the previous or next shift.");
                 }
-            }
-            if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startDate,endDate,targetPartTime.getId()) >= 5){
-                throw new ConflictException("Weekly quota exceeded. Part-Time Employee are limited to 5 shifts per week.");
             }
         }
 
@@ -127,7 +131,7 @@ public class WorkScheduleService {
         workSchedule.setId(id);
         workScheduleRepository.save(workSchedule);
 
-        if (workScheduleRepository.CountWorkScheduleInParTimeThisDay(targetPartTime.getId(),workSchedule.getWorkDate()) >= 2){
+        if (workScheduleRepository.CountWorkScheduleInParTimeThisDay(targetPartTime.getId(),workSchedule.getWorkDate()) >= MAX_SHIFT_PER_DAY){
             List<WorkSchedule> proposalWorkScheduleThisDay = workScheduleRepository.findAllWorkScheduleInParTimeApproveNull(targetPartTime.getId(),workSchedule.getWorkDate());
             for (WorkSchedule schedule : proposalWorkScheduleThisDay) {
                 schedule.setIsApproved(false);
@@ -135,7 +139,7 @@ public class WorkScheduleService {
             }
             workScheduleRepository.saveAll(proposalWorkScheduleThisDay);
         }
-        if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startDate,endDate,targetPartTime.getId()) >= 5){
+        if (workScheduleRepository.CountWorkScheduleInPartTimeThisWeek(startDate,endDate,targetPartTime.getId()) >= MAX_SHIFT_PER_WEEK){
             List<WorkSchedule> proposalWorkScheduleThisWeek = workScheduleRepository.findAllWorkScheduleInPartTimeThisWeekApprovedNull(startDate,endDate,targetPartTime.getId());
             for (WorkSchedule schedule : proposalWorkScheduleThisWeek) {
                 schedule.setIsApproved(false);
